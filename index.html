@@ -90,7 +90,8 @@ document.getElementById("go").addEventListener("click", e => {
 });
 
 // スマホを振ると、全部の目が同時に閉じて、ゆっくり開く
-const SHUT_CLOSE = 90, SHUT_HOLD = 400, SHUT_OPEN = 1200;   // 閉じる・閉じたまま・開く（ミリ秒）
+const SHUT_CLOSE = 30, SHUT_HOLD = 130, SHUT_OPEN = 400;    // 閉じる・閉じたまま・開く（ミリ秒）
+const FRONT_HOLD = 400, FRONT_JITTER = 600;               // 開いたあと正面を向いている時間と、目ごとのばらつき（ミリ秒）
 const SHAKE = 18;                                          // これより強い揺れの変化（m/s²）で反応
 let shutStart = -1e9, lastAcc = null;
 function listenShake() {
@@ -100,7 +101,10 @@ function listenShake() {
     if (lastAcc) {
       const d = Math.abs(a.x - lastAcc.x) + Math.abs(a.y - lastAcc.y) + Math.abs(a.z - lastAcc.z);
       const now = performance.now();
-      if (d > SHAKE && now - shutStart > SHUT_CLOSE + SHUT_HOLD + SHUT_OPEN) shutStart = now;
+      if (d > SHAKE && now - shutStart > SHUT_CLOSE + SHUT_HOLD + SHUT_OPEN) {
+        shutStart = now;
+        for (const eye of eyes) eye.frontUntil = now + SHUT_CLOSE + SHUT_HOLD + SHUT_OPEN + FRONT_HOLD + Math.random() * FRONT_JITTER;
+      }
     }
     lastAcc = { x: a.x, y: a.y, z: a.z };
   });
@@ -148,6 +152,7 @@ function tick(t) {
     const yaw = Math.atan2(dx, depth) * 180 / Math.PI, pitch = -Math.atan2(dy, depth) * 180 / Math.PI;
     if (e.yaw === undefined) { e.yaw = yaw; e.pitch = pitch; }
     e.yaw += (yaw - e.yaw) * k; e.pitch += (pitch - e.pitch) * k;
+    if (t < (e.frontUntil || 0)) { e.yaw = 0; e.pitch = PITCH; }   // 振ったあとは正面で大きく見開いて（列3・いちばん上の段）開き、目ごとにばらばらの時間で動き出す
     e.c = Math.max(0, Math.min(6, Math.round(3 + e.yaw / YAW * 3)));
     e.r = Math.max(0, Math.min(6, Math.round(3 - e.pitch / PITCH * 3)));
     if (e.rippleAt && t >= e.rippleAt) { e.blink = 0; e.blinkStart = t; e.rippleAt = 0; }
