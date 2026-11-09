@@ -152,7 +152,7 @@ function tick(t) {
     const yaw = Math.atan2(dx, depth) * 180 / Math.PI, pitch = -Math.atan2(dy, depth) * 180 / Math.PI;
     if (e.yaw === undefined) { e.yaw = yaw; e.pitch = pitch; }
     e.yaw += (yaw - e.yaw) * k; e.pitch += (pitch - e.pitch) * k;
-    if (t < (e.frontUntil || 0)) { e.yaw = 0; e.pitch = PITCH; }   // 振ったあとは正面で大きく見開いて（列3・いちばん上の段）開き、目ごとにばらばらの時間で動き出す
+    if (t < (e.frontUntil || 0)) { e.yaw = 0; e.pitch = 0; }   // 振ったあとは真正面（列3・真ん中の段）で画面と目が合う状態で開き、目ごとにばらばらの時間で動き出す
     e.c = Math.max(0, Math.min(6, Math.round(3 + e.yaw / YAW * 3)));
     e.r = Math.max(0, Math.min(6, Math.round(3 - e.pitch / PITCH * 3)));
     if (e.rippleAt && t >= e.rippleAt) { e.blink = 0; e.blinkStart = t; e.rippleAt = 0; }
